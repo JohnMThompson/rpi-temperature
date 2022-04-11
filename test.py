@@ -1,8 +1,9 @@
-from random import randint
 import mysql.connector
 import config
 import datetime
 import time
+import board
+import adafruit_dht
 
 db = mysql.connector.connect(
     host = config.host,
@@ -12,15 +13,24 @@ db = mysql.connector.connect(
 )
 
 mycursor = db.cursor()
+dhtDevice = adafruit_dht.DHT22(board.D4)
+room = "Cozy Office"
 
-for i in range(10):
-    temperature = randint(60,75)
-    humidity = randint(50,100)
-    room = "Cozy"
-    ct = datetime.datetime.now()
-    sql = "INSERT INTO `temperature-sensor` (timestamp, room, temperature_f, humidity) VALUES (%s, %s, %s, %s)"
-    val = (ct, room, temperature, humidity)
-    mycursor.execute(sql, val)
+while True:
+    try:
+        temperature_c = dhtDevice.temperature
+        temperature_f = temperature_c * (9 / 5) + 32
+        humidity = dhtDevice.humidity
+        ct = datetime.datetime.now()
+        sql = "INSERT INTO `temperature-sensor` (timestamp, room, temperature_f, humidity) VALUES (%s, %s, %s, %s)"
+        val = (ct, room, temperature_f, humidity)
+        mycursor.execute(sql, val)
 
-    db.commit()
-    time.sleep(5)
+        db.commit()
+
+    except RuntimeError as error:
+        continue
+    except Exception as error:
+        dhtDevice.exit()
+        raise error
+    time.sleep(60)
