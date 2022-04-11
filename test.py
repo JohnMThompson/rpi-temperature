@@ -1,6 +1,8 @@
+from random import randint
 import mysql.connector
 import config
 import datetime
+import time
 
 db = mysql.connector.connect(
     host = config.host,
@@ -9,15 +11,16 @@ db = mysql.connector.connect(
     database = config.db
 )
 
-ct = datetime.datetime.now()
-
 mycursor = db.cursor()
 
-sql = "INSERT INTO customers (name, address, timestamp) VALUES (%s, %s, %s)"
-val = ("Ashley", "456 Main Street", ct)
-mycursor.execute(sql, val)
+for i in range(10):
+    temperature = randint(60,75)
+    humidity = randint(50,100)
+    room = "Cozy"
+    ct = datetime.datetime.now()
+    sql = "INSERT INTO `temperature-sensor` (timestamp, room, temperature_f, humidity) VALUES (%s, %s, %s, %s)"
+    val = (ct, room, temperature, humidity)
+    mycursor.execute(sql, val)
 
-db.commit()
-
-
-
+    db.commit()
+    time.sleep(5)
